@@ -234,14 +234,16 @@ class PredictNet(nn.Module):
                 m.bias.data.zero_()
 
                 print("initing {}".format(m))
+
+
 class Net(nn.Module):
 
-    def __init__(self,training=True, weight_path = None, out_channels=255):
+    def __init__(self,training=True, weight_path=None, resume=False, feature_channels=0, out_channels=255):
         super(Net, self).__init__()
 
         if cfg.MODEL_TYPE["TYPE"] == "Mobilenetv3-YOLO":
             self.backbone, feature_channels = _BuildMobilenetV3(
-                weight_path=False, resume=False
+                weight_path=weight_path, resume=resume
             )
         else:
             assert print("model type must be YOLOv4 or MobilenetV3-YOLO")
