@@ -111,7 +111,8 @@ class PANet(nn.Module):
         )
 
         self.downstream_conv5 = nn.Sequential(
-            Conv(feature_channels[2] * 2, feature_channels[2] // 2, 1),
+            # Conv(feature_channels[2] * 2, feature_channels[2] // 2, 1),
+            Conv(feature_channels[2], feature_channels[2] // 2, 1),
             Conv(feature_channels[2] // 2, feature_channels[2], 3),
             Conv(feature_channels[2], feature_channels[2] // 2, 1),
         )
@@ -261,8 +262,9 @@ class Net(nn.Module):
 
 
         features = self.backbone(x)
+        print(features)
 
-        features[-1] = self.spp(features[-1])
+        # features[-1] = self.spp(features[-1])
 
         features = self.panet(features)
 
