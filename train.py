@@ -15,9 +15,9 @@ from tensorboardX import SummaryWriter
 import config.yolov4_config as cfg
 from utils import cosine_lr_scheduler
 from utils.log import Logger
-from apex import amp
-from eval_coco import *
-from eval.cocoapi_evaluator import COCOAPIEvaluator
+# from apex import amp
+# from eval_coco import *
+# from eval.cocoapi_evaluator import COCOAPIEvaluator
 
 
 def detection_collate(batch):
@@ -67,7 +67,7 @@ class Trainer(object):
             pin_memory=True,
         )
 
-        self.yolov4 = Build_Model(weight_path=weight_path, resume=resume, showatt=self.showatt).to(
+        self.yolov4 = Build_Model(weight_path=weight_path, resume=resume, showatt=self.showatt,modify=True).to(
             self.device
         )
 
@@ -102,7 +102,7 @@ class Trainer(object):
 
         self.start_epoch = chkpt["epoch"] + 1
         if chkpt["optimizer"] is not None:
-            self.optimizer.load_state_dict(chkpt["optimizer"])
+            # self.optimizer.load_state_dict(chkpt["optimizer"])
             self.best_mAP = chkpt["best_mAP"]
         del chkpt
 
@@ -152,10 +152,10 @@ class Trainer(object):
 
         def is_valid_number(x):
             return not (math.isnan(x) or math.isinf(x) or x > 1e4)
-        if self.fp_16:
-            self.yolov4, self.optimizer = amp.initialize(
-                self.yolov4, self.optimizer, opt_level="O1", verbosity=0
-            )
+        # if self.fp_16:
+        #     self.yolov4, self.optimizer = amp.initialize(
+        #         self.yolov4, self.optimizer, opt_level="O1", verbosity=0
+        #     )
         logger.info("        =======  start  training   ======     ")
         for epoch in range(self.start_epoch, self.epochs):
             start = time.time()
@@ -272,7 +272,7 @@ class Trainer(object):
                 or cfg.TRAIN["DATA_TYPE"] == "Customer"
             ):
                 mAP = 0.0
-                if epoch >= self.eval_epoch:
+                if epoch >= self.eval_epoch and epoch%5==0:
                     logger.info(
                         "===== Validate =====".format(epoch, self.epochs)
                     )
@@ -291,7 +291,7 @@ class Trainer(object):
                         )
                         writer.add_scalar("mAP", mAP, epoch)
                         self.__save_model_weights(epoch, mAP)
-                        logger.info("save weights done")
+                        logger.info("save weight done")
                     logger.info("  ===test mAP:{:.3f}".format(mAP))
             elif epoch >= 0 and cfg.TRAIN["DATA_TYPE"] == "COCO":
                 evaluator = COCOAPIEvaluator(
@@ -306,7 +306,7 @@ class Trainer(object):
                 writer.add_scalar("val/COCOAP50", ap50, epoch)
                 writer.add_scalar("val/COCOAP50_95", ap50_95, epoch)
                 self.__save_model_weights(epoch, ap50)
-                print("save weights done")
+                print("save weight done")
             end = time.time()
             logger.info("  ===cost time:{:.4f}s".format(end - start))
         logger.info(
@@ -322,9 +322,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--weight_path",
         type=str,
-        default="weight/mobilenetv2.pth",
+        default="weight/last.pt",
         help="weight file path",
-    )  # weight/darknet53_448.weights
+    )  # weight/darknet53_448.weight
     parser.add_argument(
         "--resume",
         action="store_true",

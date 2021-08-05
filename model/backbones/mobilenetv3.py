@@ -89,6 +89,10 @@ class InvertedResidual(nn.Module):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
 
+        self.inp = inp
+        self.hidden_dim = hidden_dim
+        self.stride = stride
+
         self.identity = stride == 1 and inp == oup
 
         if inp == hidden_dim:
@@ -128,6 +132,7 @@ class InvertedResidual(nn.Module):
                     bias=False,
                 ),
                 nn.BatchNorm2d(hidden_dim),
+
                 # Squeeze-and-Excite
                 SELayer(hidden_dim) if use_se else nn.Identity(),
                 h_swish() if use_hs else nn.ReLU(inplace=True),
@@ -135,12 +140,61 @@ class InvertedResidual(nn.Module):
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
             )
+            # self.conv0 = nn.Sequential(
+            #     # pw
+            #     nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
+            #     nn.BatchNorm2d(hidden_dim),
+            #     h_swish() if use_hs else nn.ReLU(inplace=True),
+            #     # dw
+            #     nn.Conv2d(
+            #         hidden_dim,
+            #         hidden_dim,
+            #         kernel_size,
+            #         stride,
+            #         (kernel_size - 1) // 2,
+            #         groups=hidden_dim,
+            #         bias=False,
+            #     ),
+            #     nn.BatchNorm2d(hidden_dim),
+            #
+            # )
+            # self.conv1 = nn.Sequential(
+            #     # Squeeze-and-Excite
+            #     SELayer(hidden_dim) if use_se else nn.Identity(),
+            #     h_swish() if use_hs else nn.ReLU(inplace=True),
+            #     # pw-linear
+            #     nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+            #     nn.BatchNorm2d(oup),
+            # )
+            #
+            #
+            # self.shortcutMid = nn.Sequential()
+            # if inp != hidden_dim:
+            #     self.shortcutMid = nn.Sequential(
+            #         nn.Conv2d(inp, hidden_dim, kernel_size=1, stride=1, padding=0, bias=False),
+            #         nn.BatchNorm2d(hidden_dim),
+            #     )
+
+
 
     def forward(self, x):
+
         if self.identity:
             return x + self.conv(x)
         else:
             return self.conv(x)
+
+        # if self.inp == self.hidden_dim:
+        #     if self.identity:
+        #         return x + self.conv(x)
+        #     else:
+        #         return self.conv(x)
+        # else:
+        #     out = self.conv0(x) + self.shortcutMid(x) if self.stride == 1 else self.conv0(x)
+        #     if self.identity:
+        #         return x + self.conv1(out)
+        #     else:
+        #         return self.conv1(out)
 
 
 class _MobileNetV3(nn.Module):
@@ -198,7 +252,7 @@ class _MobileNetV3(nn.Module):
         return x
 
     def _initialize_weights(self):
-        print("**" * 10, "Initing MobilenetV3 weights", "**" * 10)
+        print("**" * 10, "Initing MobilenetV3 weight", "**" * 10)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -293,7 +347,7 @@ if __name__ == "__main__":
     # path = 'mobilenetv3.pth'
     model = MobilenetV3(weight_path=None)
     print(model)
-    in_img = torch.randn(2, 3, 224, 224)
+    in_img = torch.randn(2, 3, 416, 416)
     p = model(in_img)
 
     for i in range(3):

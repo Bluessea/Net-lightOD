@@ -3,7 +3,7 @@
 import os.path as osp
 PROJECT_PATH = osp.abspath(osp.join(osp.dirname(__file__), '..'))
 
-DATA_PATH = osp.join(PROJECT_PATH, 'data')
+DATA_PATH = osp.join(PROJECT_PATH, 'vocdata')
 
 
 MODEL_TYPE = {
@@ -16,14 +16,14 @@ ATTENTION = {"TYPE": "NONE"}  # attention type:SEnet、CBAM or NONE
 
 # train
 TRAIN = {
-    "DATA_TYPE": "COCO",  # DATA_TYPE: VOC ,COCO or Customer
+    "DATA_TYPE": "VOC",  # DATA_TYPE: VOC ,COCO or Customer
     "TRAIN_IMG_SIZE": 416,
     "AUGMENT": True,
     "BATCH_SIZE": 1,
     "MULTI_SCALE_TRAIN": True,
     "IOU_THRESHOLD_LOSS": 0.5,
     "YOLO_EPOCHS": 50,
-    "Mobilenet_YOLO_EPOCHS": 120,
+    "Mobilenet_YOLO_EPOCHS": 1000,
     "NUMBER_WORKERS": 0,
     "MOMENTUM": 0.9,
     "WEIGHT_DECAY": 0.0005,

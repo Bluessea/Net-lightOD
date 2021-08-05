@@ -47,7 +47,7 @@ class Detector(object):
 
 if __name__=='__main__':
     detector=Detector('large',num_classes=17)
-    detector.detect('./weights/best.pkl','./test.jpg')
+    detector.detect('./weight/best.pkl','./test.jpg')
 
 
 

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import config.yolov4_config as cfg
 from model.backbones.mobilenetv3 import _BuildMobilenetV3
+from model.backbones.mobilenetv3_br import _BuildMobilenetV3 as _BuildMobilenetV3_m
 
 class Conv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1):
@@ -71,7 +72,7 @@ class SpatialPyramidPooling(nn.Module):
         return features
 
     def __initialize_weights(self):
-        print("**" * 10, "Initing head_conv weights", "**" * 10)
+        print("**" * 10, "Initing head_conv weight", "**" * 10)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -182,7 +183,7 @@ class PANet(nn.Module):
         return [downstream_feature3, upstream_feature4, upstream_feature5]
 
     def __initialize_weights(self):
-        print("**" * 10, "Initing PANet weights", "**" * 10)
+        print("**" * 10, "Initing PANet weight", "**" * 10)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -221,7 +222,7 @@ class PredictNet(nn.Module):
         return predicts
 
     def __initialize_weights(self):
-        print("**" * 10, "Initing PredictNet weights", "**" * 10)
+        print("**" * 10, "Initing PredictNet weight", "**" * 10)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -239,18 +240,25 @@ class PredictNet(nn.Module):
 
 class Net(nn.Module):
 
-    def __init__(self,training=True, weight_path=None, resume=False, feature_channels=0, out_channels=255):
+    def __init__(self,training=True, weight_path=None, resume=False, feature_channels=0, out_channels=75,modify = False):
         super(Net, self).__init__()
 
         if cfg.MODEL_TYPE["TYPE"] == "Mobilenetv3-YOLO":
-            self.backbone, feature_channels = _BuildMobilenetV3(
-                weight_path=weight_path, resume=resume
-            )
+            if modify:
+                self.backbone, feature_channels = _BuildMobilenetV3_m(
+                    weight_path=weight_path, resume=resume
+                )
+            else:
+                self.backbone, feature_channels = _BuildMobilenetV3(
+                    weight_path=weight_path, resume=resume
+                )
         else:
             assert print("model type must be YOLOv4 or MobilenetV3-YOLO")
 
         # Spatial Pyramid Pooling
         self.spp = SpatialPyramidPooling(feature_channels)
+
+        self.conv_spp2 = Conv(512,256,3)
 
         # FPN
         self.panet = PANet(feature_channels)
@@ -262,15 +270,16 @@ class Net(nn.Module):
 
 
         features = self.backbone(x)
-        print(features)
 
-        # features[-1] = self.spp(features[-1])
+        features[-1] = self.spp(features[-1])
+
+        features[-1] = self.conv_spp2(features[-1])
 
         features = self.panet(features)
 
         predicts = self.predict_net(features)
 
-        return predicts
+        return predicts,None
 
 
 
@@ -280,10 +289,11 @@ if __name__ == '__main__':
     cuda = torch.cuda.is_available()
     device = torch.device("cuda:{}".format(0) if cuda else "cpu")
     model = Net().to(device)
+    print(model)
     x = torch.randn(1,3,416,416).to(device)
     torch.cuda.empty_cache()
 
-    predicts = model(x)
+    predicts,_ = model(x)
     print(predicts[0].shape)
     print(predicts[1].shape)
     print(predicts[2].shape)

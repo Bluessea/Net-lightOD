@@ -93,12 +93,12 @@ if __name__ == "__main__":
         train_annotation_path,
         use_difficult_bbox=False,
     )
-    + parse_voc_annotation(
-        train_data_path_2012,
-        "trainval",
-        train_annotation_path,
-        use_difficult_bbox=False,
-    )
+    # + parse_voc_annotation(
+    #     train_data_path_2012,
+    #     "trainval",
+    #     train_annotation_path,
+    #     use_difficult_bbox=False,
+    # )
     len_test = parse_voc_annotation(
         test_data_path_2007,
         "test",

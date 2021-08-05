@@ -14,7 +14,7 @@ class Build_Model(nn.Module):
     Note ： int the __init__(), to define the modules should be in order, because of the weight file is order
     """
 
-    def __init__(self, weight_path=None, resume=False, showatt=False):
+    def __init__(self, weight_path=None, resume=False, showatt=False, modify=False):
         super(Build_Model, self).__init__()
         self.__showatt = showatt
         self.__anchors = torch.FloatTensor(cfg.MODEL["ANCHORS"])
@@ -31,9 +31,11 @@ class Build_Model(nn.Module):
             weight_path=weight_path,
             out_channels=self.__out_channel,
             resume=resume,
-            showatt=showatt
+            modify = modify,
+            # showatt=showatt
         )
         # small
+
         self.__head_s = Yolo_head(
             nC=self.__nC, anchors=self.__anchors[0], stride=self.__strides[0]
         )
@@ -68,7 +70,6 @@ if __name__ == "__main__":
     from utils.flops_counter import get_model_complexity_info
 
     net = Build_Model()
-    print(net)
 
     in_img = torch.randn(1, 3, 416, 416)
     p, p_d = net(in_img)
